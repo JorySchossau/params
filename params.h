@@ -50,7 +50,7 @@
 // * Options which need infinite arguments (such as a list of files) are specified as a -1:
 // *   addp(TYPE::INT, &quantity, -1, "--quantity", "The quantities to use of n items.");
 // *   would require an invocation option like this: --quantity 17 16 62 21 31 42 98 34 52
-// * A default value makes an option not required.
+// * To make an option not required, give it a default value, or specify 'false' for required. BOOL cannot be required.
 // * Print help details for parameters with argdetails(), such as:
 // *   cout << argdetails() << endl;
 //
@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
 	vector<float> seeds;
 	string name_of_run;
 	addp(TYPE::INT, &iterations, "--iterations", "The number of iterations to perform."); // minimum required signature
-	addp(TYPE::FLOAT, &seeds, 3, "--seeds", "The seeds to begin simulation.");
+	addp(TYPE::FLOAT, &seeds, 3, false, "--seeds", "The seeds to begin simulation."); // 3 floats, not required
 	addp(TYPE::STRING, &name_of_run, "simulation", "--name", "The name for this simulation run."); // defaults to "simulation"
 	addp(TYPE::BOOL, &showhelp, "--help", "Shows this help message.");
 	argparse(argv); // initiate parsing of arguments
@@ -87,6 +87,7 @@ int main(int argc, char* argv[]) {
 #include <cassert>
 #include <vector>
 #include <locale>
+#include <stdexcept>
 
 namespace Params {
 	using namespace std;
@@ -115,15 +116,13 @@ namespace Params {
 		Param::Param(TYPE _type, void* _destination, string _longPhrase, string _helpPhrase, int _xargs, bool _required, string _defaultValue) : type(_type), destination(_destination), longPhrase(_longPhrase), helpPhrase(_helpPhrase), xargs(_xargs), required(_required), defaultValue(_defaultValue) {
 			if (type == TYPE::BOOL) {
 				set = true;
+				required = false;
 				if (defaultValue != "") {
 					Set(defaultValue);
 				} else {
 					Set("false");
 				}
 			} else {
-				if (defaultValue != "") {
-					required = false;
-				}
 				if (xargs == 1) {
 					Set(defaultValue);
 				}
@@ -155,7 +154,13 @@ namespace Params {
 											 *variable = stoi(value);
 										 } else {
 											 vector<int>* variable = static_cast<vector<int>*>(destination);
+											 try {
 											 variable->push_back(stoi(value));
+											 } catch ( ... ) {
+												 fprintf(stderr, "Error in argument (expected type INT): %s\n", value.c_str());
+												 fprintf(stderr, "Options which expect infinite arguments should be last.\n");
+												 exit(1);
+											 }
 										 }
 									 }
 									 break;
@@ -165,7 +170,13 @@ namespace Params {
 												*variable = stof(value);
 											} else {
 												vector<float>* variable = static_cast<vector<float>*>(destination);
+												try {
 												variable->push_back(stof(value));
+											 } catch ( ... ) {
+												 fprintf(stderr, "Error in argument (expected type FLOAT): %s\n", value.c_str());
+												 fprintf(stderr, "Options which expect infinite arguments should be last.\n");
+												 exit(1);
+											 }
 											}
 										}
 										break;
@@ -175,7 +186,13 @@ namespace Params {
 											 *variable = stod(value);
 										 } else {
 											 vector<double>* variable = static_cast<vector<double>*>(destination);
+											 try {
 											 variable->push_back(stod(value));
+											 } catch ( ... ) {
+												 fprintf(stderr, "Error in argument (expected type DOUBLE): %s\n", value.c_str());
+												 fprintf(stderr, "Options which expect infinite arguments should be last.\n");
+												 exit(1);
+											 }
 										 }
 										 }
 										 break;
@@ -185,7 +202,13 @@ namespace Params {
 											 *variable = stoul(value);
 										 } else {
 											 vector<unsigned int>* variable = static_cast<vector<unsigned int>*>(destination);
+											 try {
 											 variable->push_back(stoul(value));
+											 } catch ( ... ) {
+												 fprintf(stderr, "Error in argument (expected type UINT): %s\n", value.c_str());
+												 fprintf(stderr, "Options which expect infinite arguments should be last.\n");
+												 exit(1);
+											 }
 										 }
 									  }
 									  break;
@@ -195,7 +218,13 @@ namespace Params {
 											 *variable = stol(value);
 										 } else {
 											 vector<long>* variable = static_cast<vector<long>*>(destination);
+											 try {
 											 variable->push_back(stol(value));
+											 } catch ( ... ) {
+												 fprintf(stderr, "Error in argument (expected type LONG): %s\n", value.c_str());
+												 fprintf(stderr, "Options which expect infinite arguments should be last.\n");
+												 exit(1);
+											 }
 										 }
 									  }
 									  break;
@@ -205,7 +234,13 @@ namespace Params {
 											 *variable = value[0];
 										 } else {
 											 vector<char>* variable = static_cast<vector<char>*>(destination);
+											 try {
 											 variable->push_back(value[0]);
+											 } catch ( ... ) {
+												 fprintf(stderr, "Error in argument (expected type CHAR): %s\n", value.c_str());
+												 fprintf(stderr, "Options which expect infinite arguments should be last.\n");
+												 exit(1);
+											 }
 										 }
 									  }
 									  break;
@@ -215,7 +250,13 @@ namespace Params {
 												 *variable = value;
 											 } else {
 												 vector<string>* variable = static_cast<vector<string>*>(destination);
+												 try {
 												 variable->push_back(value);
+											 } catch ( ... ) {
+												 fprintf(stderr, "Error in argument (expected type STRING): %s\n", value.c_str());
+												 fprintf(stderr, "Options which expect infinite arguments should be last.\n");
+												 exit(1);
+											 }
 											 }
 										 }
 										 break;
@@ -227,22 +268,42 @@ namespace Params {
 	}
 
 	static void addp(TYPE _type, void* _destination, string _longPhrase, string _helpPhrase) {
-		priv::Param* addedparam = new priv::Param(_type, _destination, _longPhrase, _helpPhrase);
+		priv::Param* addedparam = new priv::Param(_type, _destination, _longPhrase, _helpPhrase, 1, true);
 		priv::params_map[_longPhrase] = addedparam;
 	}
 
 	static void addp(TYPE _type, void* _destination, int _xargs, string _longPhrase, string _helpPhrase) {
-		priv::Param* addedparam = new priv::Param(_type, _destination, _longPhrase, _helpPhrase, _xargs);
+		priv::Param* addedparam = new priv::Param(_type, _destination, _longPhrase, _helpPhrase, _xargs, true);
 		priv::params_map[_longPhrase] = addedparam;
 	}
 	
 	static void addp(TYPE _type, void* _destination, string _defaultValue, string _longPhrase, string _helpPhrase) {
-		priv::Param* addedparam = new priv::Param(_type, _destination, _longPhrase, _helpPhrase, 1, true, _defaultValue);
+		priv::Param* addedparam = new priv::Param(_type, _destination, _longPhrase, _helpPhrase, 1, false, _defaultValue);
 		priv::params_map[_longPhrase] = addedparam;
 	}
 
 	static void addp(TYPE _type, void* _destination, int _xargs, string _defaultValue, string _longPhrase, string _helpPhrase) {
-		priv::Param* addedparam = new priv::Param(_type, _destination, _longPhrase, _helpPhrase, _xargs, true, _defaultValue);
+		priv::Param* addedparam = new priv::Param(_type, _destination, _longPhrase, _helpPhrase, _xargs, false, _defaultValue);
+		priv::params_map[_longPhrase] = addedparam;
+	}
+
+	static void addp(TYPE _type, void* _destination, bool _required, string _longPhrase, string _helpPhrase) {
+		priv::Param* addedparam = new priv::Param(_type, _destination, _longPhrase, _helpPhrase, 1, _required);
+		priv::params_map[_longPhrase] = addedparam;
+	}
+
+	static void addp(TYPE _type, void* _destination, int _xargs, bool _required, string _longPhrase, string _helpPhrase) {
+		priv::Param* addedparam = new priv::Param(_type, _destination, _longPhrase, _helpPhrase, _xargs, _required);
+		priv::params_map[_longPhrase] = addedparam;
+	}
+	
+	static void addp(TYPE _type, void* _destination, string _defaultValue, bool _required, string _longPhrase, string _helpPhrase) {
+		priv::Param* addedparam = new priv::Param(_type, _destination, _longPhrase, _helpPhrase, 1, _required, _defaultValue);
+		priv::params_map[_longPhrase] = addedparam;
+	}
+
+	static void addp(TYPE _type, void* _destination, int _xargs, string _defaultValue, bool _required, string _longPhrase, string _helpPhrase) {
+		priv::Param* addedparam = new priv::Param(_type, _destination, _longPhrase, _helpPhrase, _xargs, _required, _defaultValue);
 		priv::params_map[_longPhrase] = addedparam;
 	}
 
