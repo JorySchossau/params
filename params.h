@@ -307,7 +307,7 @@ namespace Params {
 		priv::params_map[_longPhrase] = addedparam;
 	}
 
-	static void argparse(const char** argv) {
+	static void argparse(char** argv) {
 		string args = ""; // all args as string
 		vector<int> pos; // word positions [start, end, start, end, start, ...]
 		for (int i=1; argv[i]!=nullptr; ++i) {
