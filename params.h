@@ -267,6 +267,11 @@ namespace Params {
 		}
 	}
 
+	static void addp(TYPE _type, void* _destination) { // for the help flag
+		priv::Param* addedparam = new priv::Param(_type, _destination, "--help", "Prints this help message.", 1, false);
+		priv::params_map["--help"] = addedparam;
+	}
+
 	static void addp(TYPE _type, void* _destination, string _longPhrase, string _helpPhrase) {
 		priv::Param* addedparam = new priv::Param(_type, _destination, _longPhrase, _helpPhrase, 1, true);
 		priv::params_map[_longPhrase] = addedparam;
@@ -357,6 +362,9 @@ namespace Params {
 						parameter_counter = parameter->xargs;
 					} else {
 						parameter->Set("true");
+						if (key == "--help") {
+							return;
+						}
 					}
 				}
 			} else { // reading an argument
