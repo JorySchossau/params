@@ -39,7 +39,7 @@
 // Notes
 // * "--seed" options don't require dashes. Could use "-s" or "seed" or "s" etc.
 // * Supports equals sign or space: 1) --seed 3   2) --seed=3
-// * A TYPE::BOOL will be true or false depending if it exists, such as "--help" would be a good use.
+// * A TYPE::BOOL will be true or false depending if it exists, such as "--verbose" would be a good use.
 // * Strings with spaces require escaped quotes (to prevent shell expansion): --username \"Jory Schossau\"
 // * Default values are specified as a string before the option in addp: "3.14" or "-9" or "User" for example.
 // * Options which need more than 1 argument may be specified as an integer after the variable:
@@ -51,6 +51,9 @@
 // *   addp(TYPE::INT, &quantity, -1, "--quantity", "The quantities to use of n items.");
 // *   would require an invocation option like this: --quantity 17 16 62 21 31 42 98 34 52
 // * To make an option not required, give it a default value, or specify 'false' for required. BOOL cannot be required.
+// * The "--help" option is provided for you, you simply need to specify the boolean.
+// *   If the --help option is specified then no other arguments will be read:
+// *   addp(TYPE::BOOL, &showhelp);
 // * Print help details for parameters with argdetails(), such as:
 // *   cout << argdetails() << endl;
 //
@@ -67,7 +70,7 @@ int main(int argc, char* argv[]) {
 	addp(TYPE::INT, &iterations, "--iterations", "The number of iterations to perform."); // minimum required signature
 	addp(TYPE::FLOAT, &seeds, 3, false, "--seeds", "The seeds to begin simulation."); // 3 floats, not required
 	addp(TYPE::STRING, &name_of_run, "simulation", "--name", "The name for this simulation run."); // defaults to "simulation"
-	addp(TYPE::BOOL, &showhelp, "--help", "Shows this help message.");
+	addp(TYPE::BOOL, &showhelp);
 	argparse(argv); // initiate parsing of arguments
 	if (showhelp) {
 		printf("%s\n", argdetails().c_str());
