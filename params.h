@@ -322,7 +322,7 @@ namespace Params {
 			args += string(argv[i])+" ";
 		}
 		int posspace=0, posquote=0, posequals=0;
-		posequals=args.find(' ', 0);
+		posequals=args.find('=', 0);
 		while(posequals != -1) {
 			if (posequals > 0 && args[posequals-1] != '\\') {
 				args[posequals] = ' ';
