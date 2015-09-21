@@ -107,6 +107,7 @@ namespace Params {
 				string longPhrase;
 				string helpPhrase;
 				int xargs;
+            int xargsRead; // how many of the required arguments have been set by the user
 				bool required;
 				bool set; // if required then should be set by end of arparse (we check)
 				string defaultValue;
@@ -116,7 +117,7 @@ namespace Params {
 
 		static map<string, Param*> params_map;
 
-		Param::Param(TYPE _type, void* _destination, string _longPhrase, string _helpPhrase, int _xargs, bool _required, string _defaultValue) : type(_type), destination(_destination), longPhrase(_longPhrase), helpPhrase(_helpPhrase), xargs(_xargs), required(_required), defaultValue(_defaultValue) {
+		Param::Param(TYPE _type, void* _destination, string _longPhrase, string _helpPhrase, int _xargs, bool _required, string _defaultValue) : type(_type), destination(_destination), longPhrase(_longPhrase), helpPhrase(_helpPhrase), xargs(_xargs), xargsRead(0), required(_required), defaultValue(_defaultValue) {
 			if (type == TYPE::BOOL) {
 				set = true;
 				required = false;
@@ -374,6 +375,7 @@ namespace Params {
 				int beg=*i++;
 				string key = args.substr(beg, *i-beg);
 				parameter->Set(key);
+            ++parameter->xargsRead;
 				--parameter_counter;
 				if (parameter_counter == 0) {
 					parameter->set = true;
@@ -388,6 +390,11 @@ namespace Params {
 				fprintf(stderr, "Option '%s' required, and not found, or incomplete.\n", entry.second->longPhrase.c_str());
 				exit(1);
 			}
+         if (entry.second->xargs > 1) {
+            for (int i=entry.second->xargs-entry.second->xargsRead-1; i>=0; --i) {
+               entry.second->Set( entry.second->defaultValue );
+            }
+         }
 		}
 	}
 
